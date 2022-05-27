@@ -11,6 +11,4 @@ public class Part {
         Part.price = price;
 
     }
-
-
 }
