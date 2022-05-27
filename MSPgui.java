@@ -1,8 +1,10 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
+import javax.swing.event.*;
+import javax.swing.table.*;
 
 public class MSPgui extends JFrame {
     public JPanel mainPanel;
@@ -14,7 +16,7 @@ public class MSPgui extends JFrame {
     public JTextField partQuantity;
     private JButton editButton;
     private JButton sellPart;
-    private JComboBox clientBoxList;
+    private JComboBox clientNames;
     private JTextField searchField;
     private JButton searchButton;
     private JButton deleteButton;
@@ -25,34 +27,15 @@ public class MSPgui extends JFrame {
     public MSPgui(String title) {
         super(title);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        String[] columnNames = {"Name", "Case", "Price"};
-//        String[] columnName1 = {"Case"};
-//        String[] columnName2 = {"Price"};
-
+        String[] columnNames = {"id","Name", "Case", "TotalQuantity", "Price"};
 
         table1.setBounds(30, 40, 200, 300);
         table1.setVisible(true);
-        // table1.
-        // JScrollPane sp = new JScrollPane(table1);
-//table1.set
-//
-//        String data[][] = {{"101", "Amit", "670000"},
-//                {"102", "Jai", "780000"},
-//                {"101", "Sachin", "700000"}};
-//        String column[] = {"ID", "NAME", "SALARY"};
-        // table1 = new JTable(data, column);
-        //  table1.setBounds(30, 40, 200, 300);
-        // JScrollPane sp = new JScrollPane(table1);
-        //   sp1 = sp;
-        // sp.setSize(10, 10);
-
-//        table1.addColumn(new TableColumn(2));
         this.setContentPane(mainPanel);
         this.pack();
 
-        Object[] row = {partNameField, partCaseField, partPrice};
         DefaultTableModel model = (DefaultTableModel) table1.getModel();
-        model.setColumnCount(3);
+        model.setColumnCount(5);
         model.addRow(columnNames);
 
         createButton.addActionListener(e -> {
@@ -60,24 +43,41 @@ public class MSPgui extends JFrame {
             String partCase = partCaseField.getText();
             int quantity = Integer.parseInt(partQuantity.getText());
             double price = Double.parseDouble(partPrice.getText());
-            Object newPart = new Part(partName, partCase, quantity, price);
+            Object itemID = 0;
+            Object[] row = {itemID,partName, partCase, quantity, price};
+            Object newPart = new Part(itemID,partName, partCase, quantity, price);
             partslist.add(newPart);
-            System.out.println(partName);
-            System.out.println(partCase);
-            System.out.println(quantity);
-            System.out.println(price);
-            System.out.println(newPart);
-
             model.addRow(row);
-            System.out.println(model.getColumnCount());
             partNameField.setText("");
             partCaseField.setText("");
             partQuantity.setText("");
             partPrice.setText("");
+        });
+
+        searchButton.addActionListener(e -> {
+            String searchPartName = searchField.getText();
+            for (int i = 0; i < partslist.size(); i++) {
+                String listWord = Part.getPartName(partslist.get(i));
+                if (listWord.equals(searchPartName)) {
+                    System.out.println("Found");
+                    break;
+                } else {
+                    System.out.println("Not Found");
+                }
+            }
 
         });
 
-    }
 
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(table1.getSelectedRow() != -1) {
+                    model.removeRow(table1.getSelectedRow());
+                    JOptionPane.showMessageDialog(null, "Selected row deleted successfully");
+                }
+            }
+        });
+    }
 }
 
