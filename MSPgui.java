@@ -1,10 +1,15 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
-import javax.swing.event.*;
-import javax.swing.table.*;
+
 
 public class MSPgui extends JFrame {
     public JPanel mainPanel;
@@ -22,15 +27,17 @@ public class MSPgui extends JFrame {
     private JButton deleteButton;
     private JLabel clientLabel;
     private JTable table1;
-    ArrayList<Object> partslist = new ArrayList<>();
+    private JButton excelButton;
+    ArrayList<Part> partslist = new ArrayList<>();
 
     public MSPgui(String title) {
         super(title);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        String[] columnNames = {"id","Name", "Case", "TotalQuantity", "Price"};
+        String[] columnNames = {"id", "Name", "Case", "TotalQuantity", "Price"};
 
         table1.setBounds(30, 40, 200, 300);
         table1.setVisible(true);
+        table1.setAutoCreateRowSorter(true);
         this.setContentPane(mainPanel);
         this.pack();
 
@@ -43,9 +50,9 @@ public class MSPgui extends JFrame {
             String partCase = partCaseField.getText();
             int quantity = Integer.parseInt(partQuantity.getText());
             double price = Double.parseDouble(partPrice.getText());
-            Object itemID = 0;
-            Object[] row = {itemID,partName, partCase, quantity, price};
-            Object newPart = new Part(itemID,partName, partCase, quantity, price);
+            int itemID = 0;
+            Object[] row = {itemID, partName, partCase, quantity, price};
+            Part newPart = new Part(itemID, partName, partCase, quantity, price);
             partslist.add(newPart);
             model.addRow(row);
             partNameField.setText("");
@@ -54,30 +61,60 @@ public class MSPgui extends JFrame {
             partPrice.setText("");
         });
 
-        searchButton.addActionListener(e -> {
+        searchButton.addActionListener(e -> {                                   //Find matching element in List by word ItemName
             String searchPartName = searchField.getText();
-            for (int i = 0; i < partslist.size(); i++) {
-                String listWord = Part.getPartName(partslist.get(i));
-                if (listWord.equals(searchPartName)) {
-                    System.out.println("Found");
+            for (Part part : partslist) {
+                String listSearchWord = part.getPartName();
+                if (listSearchWord.equals(searchPartName)) {
+                    System.out.println("found");
+                    searchField.setText("");
                     break;
-                } else {
-                    System.out.println("Not Found");
                 }
             }
-
         });
 
+        deleteButton.addActionListener(e -> {                                              //Delete row
+            if (table1.getSelectedRow() != -1) {
+                model.removeRow(table1.getSelectedRow());
+                JOptionPane.showMessageDialog(null, "Deleted");
+            }
+        });
 
-        deleteButton.addActionListener(new ActionListener() {
+        searchField.addKeyListener(new KeyAdapter() {                               //Dynamic Row filter by search word
             @Override
-            public void actionPerformed(ActionEvent e) {
-                if(table1.getSelectedRow() != -1) {
-                    model.removeRow(table1.getSelectedRow());
-                    JOptionPane.showMessageDialog(null, "Selected row deleted successfully");
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(table1.getModel());
+                table1.setRowSorter(sorter);
+                table1.getSelectionModel().addListSelectionListener(
+                        event -> {
+                            int viewRow = table1.getSelectedRow();
+                            if (viewRow < 0) {
+                                //Selection got filtered away.
+                                searchField.setText("");
+                            } else {
+                                int modelRow = table1.convertRowIndexToModel(viewRow);
+                                searchField.setText(String.format("Selected Row in view: %d. " +
+                                        "Selected Row in model: %d.", viewRow, modelRow));
+                            }
+                        }
+                );
+            }
+        });
+
+        excelButton.addActionListener(e -> {                                         //Export Table to Excel
+            if (e.getSource() == excelButton) {
+                JFileChooser fchoose = new JFileChooser();
+                int option = fchoose.showSaveDialog(new JFileChooser());
+                if (option == JFileChooser.APPROVE_OPTION) {
+                    String name = fchoose.getSelectedFile().getName();
+                    String path = fchoose.getSelectedFile().getParentFile().getPath();
+                    String file = path + "\\" + name + ".xls";
+                    JTableToExcel.export(table1, new File(file));
                 }
             }
         });
     }
 }
+
 
